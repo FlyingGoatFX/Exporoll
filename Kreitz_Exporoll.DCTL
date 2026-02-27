@@ -1,0 +1,191 @@
+DEFINE_UI_PARAMS(pGlob, Global_Exp.-/+Stops, DCTLUI_SLIDER_FLOAT, 0.000f, -6.000f, 6.000f, 0.001f);
+DEFINE_UI_PARAMS(pFlash, Flash, DCTLUI_SLIDER_FLOAT, 0.000f, -6.000f, 6.000f, 0.001f);
+DEFINE_UI_PARAMS(pDummy3, ==============, DCTLUI_SLIDER_FLOAT, 0, 0, 0, 0);
+DEFINE_UI_PARAMS(pRotlogBlend, Preroll, DCTLUI_SLIDER_FLOAT, 0.000f, 0.000f, 1.000f, 0.001f);
+DEFINE_UI_PARAMS(pRotlogGamma, Preroll_Gamma, DCTLUI_SLIDER_FLOAT, -0.200f, -2.000f, 2.000f, 0.001f);
+DEFINE_UI_PARAMS(pRotlogStatic, Preroll_Staticpoint, DCTLUI_SLIDER_FLOAT, 0.6600f, 0.0001f, 0.9999f, 0.0001f);
+DEFINE_UI_PARAMS(pDummy4, ==============, DCTLUI_SLIDER_FLOAT, 0, 0, 0, 0);
+DEFINE_UI_PARAMS(pRollstatic, Main_roll_Staticpoint, DCTLUI_SLIDER_FLOAT, 0.6200f, 0.0001f, 1.0000f, 0.0001f);
+DEFINE_UI_PARAMS(pRollAmnt, Main_roll_Strength, DCTLUI_SLIDER_FLOAT, 1.000f, 1.000f, 16.000f, 0.001f);
+DEFINE_UI_PARAMS(pShldr, Shoulder_Offset, DCTLUI_SLIDER_FLOAT, 0.000f, -10.000f, 10.000f, 0.001f);
+DEFINE_UI_PARAMS(pLogBlend, Blend_Log_into_Rolloff, DCTLUI_SLIDER_FLOAT, 0.000f, 0.000f, 1.000f, 0.001f);
+DEFINE_UI_PARAMS(pGamma, Post_Gamma, DCTLUI_SLIDER_FLOAT, 0.000f, -2.000f, 2.000f, 0.001f);
+DEFINE_UI_PARAMS(pDummy1, ==============, DCTLUI_SLIDER_FLOAT, 0, 0, 0, 0);
+DEFINE_UI_PARAMS(pLogbase, Log_Base2/_, DCTLUI_SLIDER_FLOAT, 4.000f, 0.000f, 20.000f, 0.0001f);
+DEFINE_UI_PARAMS(pLogOffset, Log_Offset, DCTLUI_SLIDER_FLOAT, 0.000f, -1.000f, 1.000f, 0.0001f);
+DEFINE_UI_PARAMS(pLogFlash, Log_PreFlash, DCTLUI_SLIDER_FLOAT, 0.250f, -10.000f, 10.000f, 0.0001f);
+
+DEFINE_UI_PARAMS(pDummy2, ==============, DCTLUI_SLIDER_FLOAT, 0, 0, 0, 0);
+DEFINE_UI_PARAMS(pRollThresh, Rolloff_Threshold, DCTLUI_SLIDER_FLOAT, 0.000f, 0.000f, 1.000f, 0.001f);
+DEFINE_UI_PARAMS(pThreshBlend, Threshold_Strength, DCTLUI_SLIDER_FLOAT, 1.000f, 0.000f, 1.000f, 0.001f);
+DEFINE_UI_PARAMS(pTestMax, Test_Gradient_White_lvl, DCTLUI_SLIDER_FLOAT, 1.000f, 0.000f, 16.000f, 0.001f);
+
+DEFINE_UI_PARAMS(pRotlogCtrlCheck, Ease_Preroll_Strength_Ctrl, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(pThreshCheckbox, Enable_Threshold, DCTLUI_CHECK_BOX, 1);
+DEFINE_UI_PARAMS(pTestGradCheck, Test_Gradient, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(pTestSync, Sync_Test_to_Maxwhite, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(pPrevMaxCheck, Preview_Input/Maximum, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(pRotlogOutCheck, Ouput_Preroll_Rotlog_Only, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(pPrevLogblendCheck, Preview_Log-Lin_blend, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(pBypassAll, Bypass_All, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(pCorrOutCheck, Exp/Flsh_Corrections_Only, DCTLUI_CHECK_BOX, 0);
+DEFINE_UI_PARAMS(pRollmode, Rolloff_Method, DCTLUI_COMBO_BOX, 0, {Exporoll, Log, Hybrid, None}, {Exporoll, Log, Expo+Log-(EXPERIMENTAL!), None});
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 RGB_in = make_float3(max(p_R,0.0)+0.000001,
+                            max(p_G,0.0)+0.000001,
+                            max(p_B,0.0)+0.000001);//isolate from original p_ values and protect
+
+//create test gradient, conditional for checkbox.  If true, redefine RGB_in as test gradient:
+float Maxwhite = pRollstatic / (1-_powf(1-pRollstatic, 1/pRollAmnt));//calculate initial gain to keep staticpoint the same in result
+if(pTestSync > 0){pTestMax = Maxwhite;}
+float Test_grad_in = ((float)p_X/(float)p_Width)*pTestMax;
+if(pTestGradCheck >0)
+    {
+        RGB_in = make_float3(Test_grad_in, Test_grad_in, Test_grad_in);
+    }
+
+float3 RGB_corr = make_float3(RGB_in.x*_powf(2, pGlob) + pFlash/10, 
+                              RGB_in.y*_powf(2, pGlob) + pFlash/10, 
+                              RGB_in.z*_powf(2, pGlob) + pFlash/10);//exposure corrections and (for now) naive flash.
+
+//////////////Rolloff Method:////////////////////////////////////////
+float3 Roll = make_float3(1,0,0);
+
+float3 RGB_Logblend = make_float3(1,0,0);
+float Thresh_Logblend = 0;
+float Thresh_rolled = (0);
+float3 LogRoll = make_float3(1,0,0);
+float Thresh_LogRolled = 0;//create Roll float3 and Threshold channel and log profiles, to be defined below:
+
+//calculate preroll no matter what.  Inverse of log(Input+0.01)/log(2)/8+1 applied to inverted signal, excluding 0.01 preflash so as to keep blackpoint.  
+//8 as the base is arbitrary, base doesn't matter since compensated for by pregain (RotlogGain_fctr) and exponentiation is just alotta multiplication:
+if(pRotlogCtrlCheck > 0)//add easing function to preroll strength (pRotlogBlend) more appropriate for target
+{
+    pRotlogBlend = _powf(  (  1-_powf(2, ((1-pRotlogBlend)-1)*8)  )*1.0038,    (1+0.25)  );//redefine with ease.  1.4 arbitrary, gets top end closer to 1.0
+    if(pRotlogBlend > 0.9998){pRotlogBlend = 1.0;}
+}
+float RotlogGain_fctr = 0-(_log2f(1-pRotlogStatic) / (8*pRotlogStatic));//solve for x: 1-2^( ((1-p*x)-1)*8 ) = p, or: -2^(-8px) = p-1
+RotlogGain_fctr = min(RotlogGain_fctr, 1.00);//clamp gain factor to 1.0
+float3 RotlogRoll = make_float3(_powf(2, ((1-RGB_corr.x*RotlogGain_fctr)-1)*8),
+                                _powf(2, ((1-RGB_corr.y*RotlogGain_fctr)-1)*8),
+                                _powf(2, ((1-RGB_corr.z*RotlogGain_fctr)-1)*8));
+        float Thresh_RotlogRolled = _powf(2, ((1-pRollThresh*RotlogGain_fctr)-1)*8);
+
+RotlogRoll = make_float3(max(_powf(1-RotlogRoll.x, 1-pRotlogGamma), 0.00000001),
+                         max(_powf(1-RotlogRoll.y, 1-pRotlogGamma), 0.00000001),
+                         max(_powf(1-RotlogRoll.z, 1-pRotlogGamma), 0.00000001));
+        Thresh_RotlogRolled = max(_powf(1-Thresh_RotlogRolled, 1-pRotlogGamma), 0.00000001);//apply gamma to Rotlog and its thresh channel.  Done as overwrite for legibility.
+
+float3 RGB_RotlogBlend = make_float3(RGB_corr.x*(1-pRotlogBlend) + RotlogRoll.x*pRotlogBlend,
+                                     RGB_corr.y*(1-pRotlogBlend) + RotlogRoll.y*pRotlogBlend,
+                                     RGB_corr.z*(1-pRotlogBlend) + RotlogRoll.z*pRotlogBlend);
+        float Thresh_RotlogBlend = pRollThresh*(1-pRotlogBlend) + Thresh_RotlogRolled*pRotlogBlend;
+
+if(pRollmode == Log || pRollmode == Hybrid)//if mode that includes log, calculate log. Do this first bc exporoll is destructive
+{
+    LogRoll = make_float3(_log2f(RGB_RotlogBlend.x + (pLogFlash/10)) /pLogbase+pLogOffset+1.0001,
+                          _log2f(RGB_RotlogBlend.y + (pLogFlash/10)) /pLogbase+pLogOffset+1.0001,
+                          _log2f(RGB_RotlogBlend.z + (pLogFlash/10)) /pLogbase+pLogOffset+1.0001);
+    LogRoll = make_float3(max(LogRoll.x, 0.000),
+                          max(LogRoll.y, 0.000),
+                          max(LogRoll.z, 0.000));
+        Thresh_LogRolled = _log2f(Thresh_RotlogBlend + (pLogFlash/10))/pLogbase+pLogOffset+1.0001;
+        Thresh_LogRolled = max(Thresh_LogRolled, 0.000);
+}
+
+if(pRollmode == Exporoll || pRollmode == Hybrid)//if mode includes expo, calculate expo and assign to roll
+{
+    if(pRollmode != Hybrid){pLogBlend = 0;}//full linear input if hybrid mode disabled
+
+    RGB_Logblend = make_float3(RGB_RotlogBlend.x*(1-pLogBlend) + LogRoll.x*pLogBlend,
+                               RGB_RotlogBlend.y*(1-pLogBlend) + LogRoll.y*pLogBlend,
+                               RGB_RotlogBlend.z*(1-pLogBlend) + LogRoll.z*pLogBlend);//blend log into linear input of exporoll
+            Thresh_Logblend = Thresh_RotlogBlend*(1-pLogBlend) + Thresh_LogRolled*pLogBlend;
+
+    Roll = make_float3(1-_powf(1-min(RGB_Logblend.x/Maxwhite, 1.0), pRollAmnt+pShldr),
+                       1-_powf(1-min(RGB_Logblend.y/Maxwhite, 1.0), pRollAmnt+pShldr),
+                       1-_powf(1-min(RGB_Logblend.z/Maxwhite, 1.0), pRollAmnt+pShldr));//Set Rolloff to inverse gamma by default
+        Thresh_rolled = 1-_powf(1-Thresh_Logblend/Maxwhite, pRollAmnt+pShldr);//Theshold channel
+}
+    
+//Test for log mode, then none.  
+if(pRollmode == Log)
+{
+    Roll = LogRoll;
+    Thresh_rolled = Thresh_LogRolled;
+}else
+    {
+    if(pRollmode == None)
+        {
+        Roll = RGB_corr;
+        Thresh_rolled = pRollThresh;
+        }
+    }
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+float3 Roll_gamma = make_float3(_powf(Roll.x, 1-pGamma),
+                                _powf(Roll.y, 1-pGamma),
+                                _powf(Roll.z, 1-pGamma));
+    float Thresh_gammad = _powf(Thresh_rolled, 1-pGamma);//Threshold channel
+
+float3 Roll_threshd = make_float3(0,0,0);
+
+//if threshold is set to anything greater than ~0, then for each channel rolloff only above threshold and offset the same to match linear portion.
+//EDIT: changed threshold test from testing rolled version of signal vs thresh to testing linear signal vs original thresh parameter.
+//This was to ensure that rolling doesn't introduce error, for example if threshold is bent all the way down to zero.
+if(pThreshCheckbox < 1){pRollThresh = 0.0000;}//on/off check for thresh
+if(pRollThresh > 0.0001)
+{
+    if(RGB_corr.x >= pRollThresh){
+    Roll_threshd.x = Roll_gamma.x + (pRollThresh - Thresh_gammad);
+    }else {Roll_threshd.x = RGB_corr.x;}
+    
+    if(RGB_corr.y >= pRollThresh){
+    Roll_threshd.y = Roll_gamma.y + (pRollThresh - Thresh_gammad);
+    }else {Roll_threshd.y = RGB_corr.y;}
+    
+    if(RGB_corr.z >= pRollThresh){
+    Roll_threshd.z = Roll_gamma.z + (pRollThresh - Thresh_gammad);
+    }else {Roll_threshd.z = RGB_corr.z;}
+      
+}else
+        {
+            if (pRollThresh > 0.0001){
+            Roll_threshd = make_float3(0,1,1);}//was Roll_threshd = RGB_corr. idk why??  Putting an error checker here.
+            else{Roll_threshd = Roll_gamma;}//This bit makes sense.  If threshold is zero (off), then use Roll+gamma.
+        }
+//overwrite Roll_threshd as blend between thesholded and unthresholded before moving on:
+Roll_threshd = make_float3(Roll_threshd.x*pThreshBlend + Roll_gamma.x*(1-pThreshBlend), 
+                           Roll_threshd.y*pThreshBlend + Roll_gamma.y*(1-pThreshBlend),
+                           Roll_threshd.z*pThreshBlend + Roll_gamma.z*(1-pThreshBlend));
+
+float3 intm_out = Roll_threshd;
+
+if(pPrevLogblendCheck > 0)
+    {
+        intm_out = RGB_Logblend;
+    }
+if(pRotlogOutCheck > 0)
+    {
+        intm_out = RGB_RotlogBlend;
+    }
+if(pCorrOutCheck > 0)
+    {
+        intm_out = RGB_corr;
+        }
+if(pBypassAll > 0)
+    {
+        intm_out = RGB_in;
+        }
+if(pPrevMaxCheck > 0)
+    {
+        intm_out = make_float3(RGB_corr.x/Maxwhite,
+                               RGB_corr.y/Maxwhite,
+                               RGB_corr.z/Maxwhite);
+    }
+
+float3 final_out = intm_out;
+return final_out;
+}
