@@ -28,8 +28,9 @@ TYPES OF ROLL:
 
 **Log controls** make a log curve, of course.  Note that this is also affected by preroll.  
 
-
+---------------------------------------------
 EXPERIMENTAL FEATURES:
+
 These are features that only sort of work and may not continue to subsequent versions.
 
 **Hybrid Mode**- If the experimental **Hybrid Mode** is enabled, the log-like curve resulting from preroll and log controls can be blended with the Main roll using the 'Blend_log_into_Rolloff' slider.  Note that preroll affects both sides of the blend and the result can be kind of ugly.  Like I said, experimental.
