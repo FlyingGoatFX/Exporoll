@@ -9,7 +9,7 @@ MAIN CONTROLS:
 
 **Flash** - Equivalent to DaVinci's 'offset'.  Adds or subtracts some value across all pixels.  The most apparent effect is that it raises shadows and blackpoint, similarly to "flashing" film or spiking a lens.  Applied before any rolloff operation, staticpoint, or thresholding.
 
-**Staticpoint**- a point that remains in place during corresponing operation.  Note that it is applied before gamma, so is displaced by gamma adjustments
+**Staticpoint**- a point that remains in place during corresponding operation.  Note that it is applied before gamma, so is displaced by gamma adjustments
 
 **Threshold controls** specify an input value below which the original (with exp/flash corrections applied) linear signal is used, and how much the result is blended over the normal rolloff result.  Note that for now it is a hard threshold with no automatic tangent continuity with rolloff curve.
 
