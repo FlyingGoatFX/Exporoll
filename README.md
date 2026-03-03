@@ -1,5 +1,5 @@
 # Exporoll
-A tonemapper DaVinci Resolve DCTL designed to create a pleasing rolloff curve for linear or HDR picture while preserving linear contrast and range in shadows and midtones.  It combines a blend between linear and asymptotic "Preroll", with a filmic style rolloff.  Internally, it applies the function and gamma to a negative picture which is then uninverted for classic, film-style look with faithfulness to real-world contrast.
+A tonemapper DaVinci Resolve DCTL designed to create a pleasing rolloff curve for linear or HDR picture while preserving linear contrast and range in shadows and midtones.  It combines a blend between linear and asymptotic "Preroll", with a filmic style rolloff.  Internally, it applies the function to a negative picture which is then uninverted for classic, film-style look with faithfulness to real-world contrast.
 
 
 -----------------------------------------------
