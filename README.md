@@ -2,7 +2,10 @@
 A tonemapper DaVinci Resolve DCTL that can be used to create a pleasing rolloff curve for linear or HDR picture while preserving linear contrast in shadows and midtones. 
 It combines a blend of linear and asymptotic "Preroll" with a filmic style rolloff.  Internally, it applies the function and gamma to a negative picture which is then uninverted for classic, film-style look.
 
+
+-----------------------------------------------
 Controls:
+
 **Global_Exp-/+ Stops** - exposure, measured in n stops, or gain = 2^n.  Applied before any rolloff operation, staticpoint, or thresholding.
 
 **Flash** - Equivalent to DaVinci's 'offset'.  Adds or subtracts some value across all pixels.  The most apparent effect to human vision is that it raises shadows and blackpoint, similarly to "flashing" film or spiking a lens.  Applied before any rolloff operation, staticpoint, or thresholding.
