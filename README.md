@@ -10,6 +10,7 @@ Controls:
 **Staticpoint**- a point that remains in place during corresponing operation.  Note that it is applied before gamma, so is displaced by gamma adjustments
 
 TYPES OF ROLL:
+
 **Preroll (or Rotlog)**- linear (or eased) interpolation between original (with exp/flash corrections applied) linear signal and an inverse log function applied to negative picture which is then inverted again to a positive that asymptotically approaches 1.0.  Input gain adjusted to satisfy staticpoint.  Referred to also as 'Rotlog', or 'rotated logarithmic' since the function essentially rotates and flips the graphed signal of a typical log transform.  Instead of becoming more linear as it gets brighter, it curves more as it gets brighter, keeping shadows and midtones closer to linear values.  Gamma is applied last.
 
 **Main Exporoll**- Accepts blend between linear (preroll = 0) and preroll of some strength (preroll > 0).  Pulldown then gamma, or exponent, applied to negative picture, then inverted again for positive output.  Input gain adjusted to satisfy staticpoint.  'Shoulder offset' value is added to exponent independent of staticpoint.  Gamma is applied last
