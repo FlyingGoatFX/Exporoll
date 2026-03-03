@@ -27,3 +27,5 @@ TYPES OF ROLL:
 **Main Exporoll**- Accepts blend between linear (preroll = 0) and preroll of some strength (preroll > 0).  Pulldown then gamma, or exponent, applied to negative picture, then inverted again for positive output.  Input gain adjusted to satisfy staticpoint.  'Shoulder offset' value is added to exponent independent of staticpoint.  Gamma is applied last
 
 **Log controls** make a log curve, of course.  Note that this is also affected by preroll.  
+
+If the experimental **Hybrid Mode** is enabled, the resultant log-like curve can be blended with the Main roll using the 'Blend_log_into_Rolloff' slider.  Note that preroll affects both sides of the blend and the result can be kind of ugly.  Like I said, experimental.
