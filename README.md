@@ -1,10 +1,9 @@
 # Exporoll
-A tonemapper DaVinci Resolve DCTL that can be used to create a pleasing rolloff curve for linear or HDR picture while preserving linear contrast in shadows and midtones. 
-It combines a blend of linear and asymptotic "Preroll" with a filmic style rolloff.  Internally, it applies the function and gamma to a negative picture which is then uninverted for classic, film-style look.
+A tonemapper DaVinci Resolve DCTL that can be used to create a pleasing rolloff curve for linear or HDR picture while preserving linear contrast in shadows and midtones.  It combines a blend between linear and asymptotic "Preroll", with a filmic style rolloff.  Internally, it applies the function and gamma to a negative picture which is then uninverted for classic, film-style look.
 
 
 -----------------------------------------------
-Controls:
+MAIN CONTROLS:
 
 **Global_Exp-/+ Stops** - exposure, measured in n stops, or gain = 2^n.  Applied before any rolloff operation, staticpoint, or thresholding.
 
@@ -20,7 +19,7 @@ Controls:
 **Test Gradient White lvl** is the maximum value of the test gradient.
 
 -----------------------------------------------
-TYPES OF ROLL:
+ROLL TYPES AND ORDER:
 
 **Preroll (or Rotlog)**- linear (or eased) interpolation between original (with exp/flash corrections applied) linear signal and an inverse log function applied to negative picture which is then inverted again to a positive that asymptotically approaches 1.0.  Input gain adjusted to satisfy staticpoint.  Referred to also as 'Rotlog', or 'rotated logarithmic' since the function essentially rotates and flips the graphed signal of a typical log transform.  Instead of becoming more linear as it gets brighter, it curves more as it gets brighter, keeping shadows and midtones closer to linear values.  Gamma is applied last.
 
@@ -33,4 +32,4 @@ EXPERIMENTAL FEATURES:
 
 These are features that only sort of work and may not continue to subsequent versions.
 
-**Hybrid Mode**- If the experimental **Hybrid Mode** is enabled, the log-like curve resulting from preroll and log controls can be blended with the Main roll using the 'Blend_log_into_Rolloff' slider.  Note that preroll affects both sides of the blend and the result can be kind of ugly.  Like I said, experimental.
+  **Hybrid Mode**- If the experimental **Hybrid Mode** is enabled, the log-like curve resulting from preroll and log controls can be blended with the Main roll using the 'Blend_log_into_Rolloff' slider.  Note that preroll affects both sides of the blend and the result can be kind of ugly.  Like I said, experimental.
